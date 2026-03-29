@@ -449,10 +449,12 @@ export default function MoneyMentor() {
         const result = computeFIRE(newData.age || 25, newData.income || 0, newData.expenses || 0, newData.savings || 0, newData.retireAge || 50, 6, 12);
         setFireResult(result);
         setChatMessages([...newMessages, { role: "assistant", content: `Crunching your numbers... Here's your FIRE plan! 🔥` }]);
-        setAiInsight(""); setAiInsightLoading(false);
+        setAiInsight(""); 
+        setAiInsightLoading(true);
+        const firePrompt = `Analyze this FIRE retirement plan for an Indian aged ${newData.age}: Monthly income ${newData.income}, expenses ${newData.expenses}, current savings ${newData.savings}, wants to retire at ${newData.retireAge}. Corpus needed: ${result.corpusNeeded}, monthly SIP needed: ${result.monthlySIP}, savings rate: ${result.savingsRate}%, gap: ${result.gap}. Give personalized advice on whether this is realistic and what they should do.`;
         setTimeout(() => { 
           setActiveModule("fire"); setScreen("module"); 
-          getAIInsight(`Analyze this FIRE retirement plan for an Indian aged ${newData.age}: Monthly income ${newData.income}, expenses ${newData.expenses}, current savings ${newData.savings}, wants to retire at ${newData.retireAge}. Corpus needed: ${result.corpusNeeded}, monthly SIP needed: ${result.monthlySIP}, savings rate: ${result.savingsRate}%, gap: ${result.gap}. Give personalized advice on whether this is realistic and what they should do.`);
+          getAIInsight(firePrompt);
         }, 800);
       }
       if (chatFlow.type === "tax") {
@@ -471,10 +473,12 @@ export default function MoneyMentor() {
         if ((newData.nps || 0) < 50000) md.push({ name: "80CCD(1B) — NPS", max: 50000, used: newData.nps || 0, tip: "Additional ₹50K for NPS, over and above 80C" });
         setTaxResult({ oldResult: o, newResult: n, savings: s, better: s > 0 ? "new" : "old", missedDeductions: md });
         setChatMessages([...newMessages, { role: "assistant", content: `Analyzing your tax situation... Here's the comparison! 🧾` }]);
-        setAiInsight(""); setAiInsightLoading(false);
+        setAiInsight(""); 
+        setAiInsightLoading(true);
+        const taxPrompt = `Analyze this tax situation for an Indian aged ${userProfile.age || "25-30"}: Annual income ${newData.income}. Old regime tax: ${o.tax}, New regime tax: ${n.tax}. Better regime: ${s > 0 ? "new" : "old"}, saves ${Math.abs(s)}. Deductions used — 80C: ${newData.sec80c || 0}/150000, 80D: ${newData.sec80d || 0}/75000, NPS: ${newData.nps || 0}/50000, HRA: ${newData.hra || 0}. Missed deductions: ${md.length}. Give specific advice on optimizing their tax.`;
         setTimeout(() => { 
           setActiveModule("tax"); setScreen("module"); 
-          getAIInsight(`Analyze this tax situation for an Indian aged ${userProfile.age || "25-30"}: Annual income ${newData.income}. Old regime tax: ${o.tax}, New regime tax: ${n.tax}. Better regime: ${s > 0 ? "new" : "old"}, saves ${Math.abs(s)}. Deductions used — 80C: ${newData.sec80c || 0}/150000, 80D: ${newData.sec80d || 0}/75000, NPS: ${newData.nps || 0}/50000, HRA: ${newData.hra || 0}. Missed deductions: ${md.length}. Give specific advice on optimizing their tax.`);
+          getAIInsight(taxPrompt);
         }, 800);
       }
     }
