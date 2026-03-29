@@ -264,19 +264,17 @@ export default function MoneyMentor() {
     setChatMessages(newMessages);
     setChatLoading(true);
     try {
-      const conversationHistory = newMessages.map(m => ({ role: m.role, content: m.content }));
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const conversationHistory = newMessages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA28Vb0Q4jdJ3BGGXllzNVRVNv1jjTmMmM", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: "You are AI Money Mentor, a personal finance advisor built for Indian users. You speak in a warm, friendly tone like a knowledgeable friend who is a financial expert. Keep responses concise (3-5 short paragraphs max). Use the rupee sign for currency. Reference Indian financial instruments: PPF, NPS, ELSS, SIPs, EPF, Section 80C/80D, HRA, old vs new tax regime, etc. When relevant, suggest one of these tools available in the app: Money Health Score (financial health check), Tax Wizard (old vs new regime comparison), FIRE Path Planner (retirement corpus calculator), MF Portfolio X-Ray (mutual fund overlap analysis), Couple's Money Planner (optimize across both incomes), Life Event Advisor (guidance for bonus, marriage, baby, inheritance). Format tool suggestions naturally in your response. Never say you cannot help. Always give actionable advice with specific numbers where possible. Be confident, specific, and practical.",
-          messages: conversationHistory,
+          system_instruction: { parts: [{ text: "You are AI Money Mentor, a personal finance advisor built for Indian users. You speak in a warm, friendly tone like a knowledgeable friend who is a financial expert. Keep responses concise (3-5 short paragraphs max). Use the rupee sign for currency. Reference Indian financial instruments: PPF, NPS, ELSS, SIPs, EPF, Section 80C/80D, HRA, old vs new tax regime, etc. When relevant, suggest one of these tools available in the app: Money Health Score (financial health check), Tax Wizard (old vs new regime comparison), FIRE Path Planner (retirement corpus calculator), MF Portfolio X-Ray (mutual fund overlap analysis), Couple's Money Planner (optimize across both incomes), Life Event Advisor (guidance for bonus, marriage, baby, inheritance). Format tool suggestions naturally like: Try our [Tool Name] for this. Never say you cannot help. Always give actionable advice with specific numbers where possible. Be confident, specific, and practical. Do not use markdown formatting like ** or ## in your responses - write in plain text only." }] },
+          contents: conversationHistory,
         }),
       });
       const data = await response.json();
-      const aiReply = data.content?.map(c => c.text || "").join("") || "I'm having trouble connecting right now. Please try one of the tools below!";
+      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble connecting right now. Please try one of the tools below!";
       setChatMessages([...newMessages, { role: "assistant", content: aiReply }]);
     } catch (err) {
       setChatMessages([...newMessages, { role: "assistant", content: "I'm having trouble connecting right now. Please try one of the tools below — they all work offline!" }]);
