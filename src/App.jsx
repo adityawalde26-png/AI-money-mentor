@@ -256,6 +256,20 @@ export default function MoneyMentor() {
 
   useEffect(() => { if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
+  const generateFallbackResponse = (msg) => {
+    const m = msg.toLowerCase();
+    const name = userProfile.name || "there";
+    if (m.match(/^(hi|hello|hey|namaste)/)) return `Hey ${name}! What's on your mind financially?`;
+    if (m.match(/tax|regime|80c|deduction/)) return `Great question about taxes! The key is comparing old vs new regime with your actual numbers.\n\n👉 Try our Tax Wizard for a precise comparison!`;
+    if (m.match(/retire|fire|corpus|pension/)) return `Retirement planning is all about starting early. The 4% rule says you need 25x your annual expenses.\n\n👉 Try our FIRE Path Planner to calculate your exact target!`;
+    if (m.match(/sip|mutual fund|invest|portfolio/)) return `Smart move thinking about investments! A diversified portfolio across equity, debt and gold is key.\n\n👉 Try our MF Portfolio X-Ray if you already have mutual funds!`;
+    if (m.match(/bonus|windfall|extra money/)) return `Congrats on the bonus! Clear high-interest debt first, then build emergency fund, then invest.\n\n👉 Try our Life Event Advisor for a personalized bonus action plan!`;
+    if (m.match(/marr|wedding|couple|spouse/)) return `Financial planning as a couple can save you lakhs in taxes!\n\n👉 Try our Couple's Money Planner to optimize across both incomes!`;
+    if (m.match(/baby|child|kid|education/)) return `With a child, increase life cover to 15-20x income and start an education SIP early.\n\n👉 Try our Life Event Advisor — select "New Baby" for your action plan!`;
+    if (m.match(/insurance|term plan|health cover/)) return `Insurance is the foundation — term life (10x income) + health cover (₹10L+) are non-negotiable.\n\n👉 Take our Money Health Score to check if you're adequately covered!`;
+    return `I'd love to help with that, ${name}! I can assist with tax planning, investments, retirement, insurance, or any financial question. What specifically would you like to know?`;
+  };
+
   const sendChat = async () => {
     if (!chatInput.trim() || chatLoading) return;
     const userMsg = chatInput.trim();
@@ -264,28 +278,27 @@ export default function MoneyMentor() {
     setChatMessages(newMessages);
     setChatLoading(true);
     try {
-      const conversationHistory = newMessages.filter(m => m.role === "user").map(m => ({ role: "user", parts: [{ text: m.content }] }));
-      const makeRequest = async (retries = 2) => {
-        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=AIzaSyA28Vb0Q4jdJ3BGGXllzNVRVNv1jjTmMmM", {
+      const conversationHistory = newMessages.map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }));
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=AIzaSyC6kLXxDF89EWXsUZvlqeoKZ9iOOErCfjk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: "You are AI Money Mentor, a personal finance advisor built for Indian users. You speak in a warm, friendly tone like a knowledgeable friend who is a financial expert. Keep responses concise (3-5 short paragraphs max). Use the rupee sign for currency. Reference Indian financial instruments: PPF, NPS, ELSS, SIPs, EPF, Section 80C/80D, HRA, old vs new tax regime, etc. When relevant, suggest one of these tools available in the app: Money Health Score (financial health check), Tax Wizard (old vs new regime comparison), FIRE Path Planner (retirement corpus calculator), MF Portfolio X-Ray (mutual fund overlap analysis), Couple's Money Planner (optimize across both incomes), Life Event Advisor (guidance for bonus, marriage, baby, inheritance). Format tool suggestions naturally like: Try our [Tool Name] for this. Never say you cannot help. Always give actionable advice with specific numbers where possible. Be confident, specific, and practical. Do not use markdown formatting like ** or ## in your responses - write in plain text only." }] },
+          system_instruction: { parts: [{ text: "You are AI Money Mentor, a personal finance advisor for Indian users. Warm, friendly tone. Concise responses (3-4 short paragraphs max). Use rupee sign. Reference Indian instruments: PPF, NPS, ELSS, SIPs, EPF, 80C/80D, HRA, old vs new tax regime. When relevant suggest app tools: Money Health Score, Tax Wizard, FIRE Path Planner, MF Portfolio X-Ray, Couple's Money Planner, Life Event Advisor. Give actionable advice with specific numbers. No markdown formatting like ** or ##. The user's name is " + (userProfile.name || "friend") + "." }] },
           contents: conversationHistory,
         }),
       });
       const data = await response.json();
-        if (data.error && retries > 0) {
-          await new Promise(r => setTimeout(r, 12000));
-          return makeRequest(retries - 1);
-        }
-        return data;
-      };
-      const data = await makeRequest();
-      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || (data.error ? "I'm thinking hard! Please wait a moment and try again." : "I'm having trouble connecting. Please try the tools below!");
-      setChatMessages([...newMessages, { role: "assistant", content: aiReply }]);
+      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (aiReply) {
+        setChatMessages([...newMessages, { role: "assistant", content: aiReply }]);
+      } else {
+        setChatMessages([...newMessages, { role: "assistant", content: generateFallbackResponse(userMsg) }]);
+      }
     } catch (err) {
-      setChatMessages([...newMessages, { role: "assistant", content: "I'm having trouble connecting right now. Please try one of the tools below — they all work offline!" }]);
+      setChatMessages([...newMessages, { role: "assistant", content: generateFallbackResponse(userMsg) }]);
     }
     setChatLoading(false);
   };
