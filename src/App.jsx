@@ -264,7 +264,7 @@ export default function MoneyMentor() {
     setChatMessages(newMessages);
     setChatLoading(true);
     try {
-      const conversationHistory = newMessages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+      const conversationHistory = newMessages.filter(m => m.role === "user").map(m => ({ role: "user", parts: [{ text: m.content }] }));
       const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA28Vb0Q4jdJ3BGGXllzNVRVNv1jjTmMmM", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -274,7 +274,7 @@ export default function MoneyMentor() {
         }),
       });
       const data = await response.json();
-      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble connecting right now. Please try one of the tools below!";
+      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || (data.error ? "Error: " + data.error.message : "I'm having trouble connecting. Please try the tools below!");
       setChatMessages([...newMessages, { role: "assistant", content: aiReply }]);
     } catch (err) {
       setChatMessages([...newMessages, { role: "assistant", content: "I'm having trouble connecting right now. Please try one of the tools below — they all work offline!" }]);
