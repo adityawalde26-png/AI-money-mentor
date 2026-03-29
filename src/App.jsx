@@ -227,8 +227,12 @@ function PriorityBadge({ priority }) { const c = { HIGH: "#EF4444", MEDIUM: "#F5
 
 // ─── MAIN APP ───
 export default function MoneyMentor() {
-  const [screen, setScreen] = useState("home");
+  const [screen, setScreen] = useState("landing");
   const [activeModule, setActiveModule] = useState(null);
+  const [onboardStep, setOnboardStep] = useState(0);
+  const [userProfile, setUserProfile] = useState({ name: "", age: "", concern: "" });
+  const [heroVisible, setHeroVisible] = useState(false);
+  useEffect(() => { setTimeout(() => setHeroVisible(true), 100); }, []);
   const [healthStep, setHealthStep] = useState(0);
   const [healthAnswers, setHealthAnswers] = useState({});
   const [healthResult, setHealthResult] = useState(null);
@@ -237,7 +241,48 @@ export default function MoneyMentor() {
   const [mfFunds, setMfFunds] = useState([{ name: "", invested: "" }]); const [mfResult, setMfResult] = useState(null);
   const [p1, setP1] = useState({ income: "", expenses: "", sec80c: "", sec80d: "", nps: "", hra: "", savings: "" }); const [p2, setP2] = useState({ income: "", expenses: "", sec80c: "", sec80d: "", nps: "", hra: "", savings: "" }); const [coupleResult, setCoupleResult] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null); const [lifeAnswers, setLifeAnswers] = useState({}); const [lifeResult, setLifeResult] = useState(null);
+  // AI Chat
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
   const scrollRef = useRef(null);
+
+  const initChat = (profile) => {
+    const concernMap = { "saving_tax": "tax optimization", "retirement": "retirement planning", "investing": "investment strategy", "debt": "debt management", "insurance": "insurance gaps", "general": "overall financial health" };
+    const concern = concernMap[profile.concern] || "your finances";
+    setChatMessages([{ role: "assistant", content: `Hey ${profile.name}! 👋 Great to meet you.\n\nBased on what you told me, I can see ${concern} is on your mind. That's a smart thing to focus on${profile.age ? " at " + profile.age : ""}.\n\nI'm here to help — ask me anything, or jump into one of the tools below. Here are some things I can help with:\n\n• Personalized tax advice for your income level\n• How much you need to retire comfortably\n• Whether your mutual funds overlap\n• What to do with a bonus, inheritance, or life event\n\nWhat's on your mind?` }]);
+  };
+
+  useEffect(() => { if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
+
+  const sendChat = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const newMessages = [...chatMessages, { role: "user", content: userMsg }];
+    setChatMessages(newMessages);
+    setChatLoading(true);
+    try {
+      const conversationHistory = newMessages.map(m => ({ role: m.role, content: m.content }));
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "You are AI Money Mentor, a personal finance advisor built for Indian users. You speak in a warm, friendly tone like a knowledgeable friend who is a financial expert. Keep responses concise (3-5 short paragraphs max). Use the rupee sign for currency. Reference Indian financial instruments: PPF, NPS, ELSS, SIPs, EPF, Section 80C/80D, HRA, old vs new tax regime, etc. When relevant, suggest one of these tools available in the app: Money Health Score (financial health check), Tax Wizard (old vs new regime comparison), FIRE Path Planner (retirement corpus calculator), MF Portfolio X-Ray (mutual fund overlap analysis), Couple's Money Planner (optimize across both incomes), Life Event Advisor (guidance for bonus, marriage, baby, inheritance). Format tool suggestions naturally in your response. Never say you cannot help. Always give actionable advice with specific numbers where possible. Be confident, specific, and practical.",
+          messages: conversationHistory,
+        }),
+      });
+      const data = await response.json();
+      const aiReply = data.content?.map(c => c.text || "").join("") || "I'm having trouble connecting right now. Please try one of the tools below!";
+      setChatMessages([...newMessages, { role: "assistant", content: aiReply }]);
+    } catch (err) {
+      setChatMessages([...newMessages, { role: "assistant", content: "I'm having trouble connecting right now. Please try one of the tools below — they all work offline!" }]);
+    }
+    setChatLoading(false);
+  };
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [healthStep, screen, healthResult, taxResult, fireResult, mfResult, coupleResult, lifeResult, selectedEvent]);
 
@@ -257,16 +302,196 @@ export default function MoneyMentor() {
       {[["10%", "70%", "#10B981", 400], ["60%", "10%", "#F59E0B", 350], ["80%", "80%", "#8B5CF6", 300]].map(([t, l, c, s], i) => <div key={i} style={{ position: "fixed", top: t, left: l, width: s, height: s, borderRadius: "50%", background: c, filter: "blur(120px)", opacity: 0.07, pointerEvents: "none", zIndex: 0 }} />)}
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 520, margin: "0 auto", padding: "0 20px" }} ref={scrollRef}>
-        <div style={{ paddingTop: 40, paddingBottom: 8, textAlign: "center" }}>
-          {screen !== "home" && <button onClick={goHome} style={{ position: "absolute", left: 20, top: 44, background: "none", border: "1px solid #334155", color: "#94a3b8", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13 }}>← Back</button>}
+        <div style={{ paddingTop: 40, paddingBottom: 8, textAlign: "center", display: screen === "landing" || screen === "onboard" ? "none" : "block" }}>
+          {screen !== "home" && screen !== "landing" && screen !== "onboard" && <button onClick={goHome} style={{ position: "absolute", left: 20, top: 44, background: "none", border: "1px solid #334155", color: "#94a3b8", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13 }}>← Back</button>}
           <div style={{ fontSize: 13, letterSpacing: 4, color: "#64748b", textTransform: "uppercase", marginBottom: 8 }}>AI-Powered</div>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, background: "linear-gradient(135deg, #60a5fa, #10B981, #F59E0B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Money Mentor</h1>
           <p style={{ color: "#64748b", fontSize: 14, marginTop: 6, marginBottom: 0 }}>{screen === "home" ? "Your personal AI financial planning assistant" : MODULES[activeModule]?.name}</p>
         </div>
 
+        {/* LANDING PAGE */}
+        {screen === "landing" && (<div style={{ paddingTop: 60, paddingBottom: 60, textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <style>{`
+            @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+            @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+            @keyframes countUp { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+          `}</style>
+          
+          <div style={{ animation: heroVisible ? "fadeUp 0.8s ease forwards" : "none", opacity: heroVisible ? 1 : 0 }}>
+            <div style={{ fontSize: 56, marginBottom: 20, animation: "float 3s ease-in-out infinite" }}>🧠</div>
+            <h1 style={{ fontSize: 36, fontWeight: 800, margin: "0 0 8px", lineHeight: 1.2, background: "linear-gradient(135deg, #60a5fa, #10B981, #F59E0B, #EC4899)", backgroundSize: "200% auto", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", animation: "shimmer 4s linear infinite" }}>
+              AI Money Mentor
+            </h1>
+            <p style={{ fontSize: 17, color: "#94a3b8", margin: "0 0 32px", lineHeight: 1.6 }}>
+              Your personal AI-powered<br/>financial planning assistant
+            </p>
+          </div>
+
+          <div style={{ animation: heroVisible ? "fadeUp 0.8s ease 0.3s forwards" : "none", opacity: 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 36, maxWidth: 400, margin: "0 auto 36px" }}>
+              {[{ num: "6", label: "AI Tools" }, { num: "₹0", label: "Free Forever" }, { num: "5 min", label: "Full Plan" }].map((s, i) => (
+                <div key={i} style={{ padding: "16px 8px", background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b", borderRadius: 12 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: ["#60a5fa", "#10B981", "#F59E0B"][i], animation: `countUp 0.5s ease ${0.5 + i * 0.2}s forwards`, opacity: 0 }}>{s.num}</div>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ animation: heroVisible ? "fadeUp 0.8s ease 0.6s forwards" : "none", opacity: 0 }}>
+            <p style={{ fontSize: 13, color: "#475569", marginBottom: 16 }}>95% of Indians don't have a financial plan.<br/>Let's change that — starting with you.</p>
+            <button onClick={() => setScreen("onboard")} style={{
+              padding: "16px 48px", background: "linear-gradient(135deg, #2563eb, #7c3aed)",
+              border: "none", borderRadius: 14, color: "#fff", fontSize: 17, fontWeight: 700,
+              cursor: "pointer", boxShadow: "0 0 40px rgba(37,99,235,0.3)",
+              transition: "all 0.3s ease",
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 0 60px rgba(37,99,235,0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 0 40px rgba(37,99,235,0.3)"; }}>
+              Get Started →
+            </button>
+          </div>
+
+          <div style={{ marginTop: 48, animation: heroVisible ? "fadeUp 0.8s ease 0.9s forwards" : "none", opacity: 0 }}>
+            <div style={{ fontSize: 11, color: "#334155", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Powered by</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+              {["Tax Optimization", "FIRE Planning", "MF Analysis", "Couple Planning", "Life Events"].map((t, i) => (
+                <span key={i} style={{ fontSize: 11, color: "#475569", padding: "4px 10px", borderRadius: 6, border: "1px solid #1e293b" }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>)}
+
+        {/* ONBOARDING */}
+        {screen === "onboard" && (<div style={{ paddingTop: 40, paddingBottom: 60, minHeight: "80vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <style>{`@keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }`}</style>
+          
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= onboardStep ? "linear-gradient(90deg, #2563eb, #7c3aed)" : "#1e293b", transition: "all 0.4s ease" }} />
+              ))}
+            </div>
+          </div>
+
+          {onboardStep === 0 && (
+            <div style={{ animation: "slideIn 0.4s ease" }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>👋</div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px", color: "#e2e8f0" }}>What should I call you?</h2>
+              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>Let's make this personal.</p>
+              <input value={userProfile.name} onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                placeholder="Your first name"
+                style={{ width: "100%", padding: "16px 20px", background: "#0f172a", border: "2px solid #334155", borderRadius: 14, color: "#e2e8f0", fontSize: 18, outline: "none", boxSizing: "border-box", textAlign: "center" }}
+                onFocus={(e) => e.target.style.borderColor = "#2563eb"} onBlur={(e) => e.target.style.borderColor = "#334155"}
+                onKeyDown={(e) => { if (e.key === "Enter" && userProfile.name.trim()) setOnboardStep(1); }}
+                autoFocus />
+              <button onClick={() => { if (userProfile.name.trim()) setOnboardStep(1); }}
+                style={{ marginTop: 20, width: "100%", padding: "14px", background: userProfile.name.trim() ? "linear-gradient(135deg, #2563eb, #7c3aed)" : "#1e293b", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: userProfile.name.trim() ? "pointer" : "default", transition: "all 0.3s" }}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {onboardStep === 1 && (
+            <div style={{ animation: "slideIn 0.4s ease" }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>🎂</div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px", color: "#e2e8f0" }}>How old are you, {userProfile.name}?</h2>
+              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>This helps me tailor advice to your life stage.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                {[{ label: "18–25", value: "22", emoji: "🎓" }, { label: "26–35", value: "30", emoji: "💼" }, { label: "36–45", value: "40", emoji: "🏠" }, { label: "46+", value: "50", emoji: "🌅" }].map(opt => (
+                  <button key={opt.label} onClick={() => { setUserProfile({ ...userProfile, age: opt.value }); setOnboardStep(2); }}
+                    style={{ padding: "20px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #334155", borderRadius: 14, cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "rgba(37,99,235,0.08)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>{opt.emoji}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0" }}>{opt.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {onboardStep === 2 && (
+            <div style={{ animation: "slideIn 0.4s ease" }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>🎯</div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px", color: "#e2e8f0" }}>What's your biggest money worry?</h2>
+              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>I'll prioritize advice around this.</p>
+              <div style={{ display: "grid", gap: 10 }}>
+                {[
+                  { label: "Am I paying too much tax?", value: "saving_tax", icon: "🧾" },
+                  { label: "Will I have enough to retire?", value: "retirement", icon: "🔥" },
+                  { label: "I don't know where to invest", value: "investing", icon: "📈" },
+                  { label: "I have loans/debt to manage", value: "debt", icon: "💳" },
+                  { label: "Am I insured enough?", value: "insurance", icon: "🛡️" },
+                  { label: "Just want a financial check-up", value: "general", icon: "💊" },
+                ].map(opt => (
+                  <button key={opt.value} onClick={() => {
+                    const profile = { ...userProfile, concern: opt.value };
+                    setUserProfile(profile);
+                    initChat(profile);
+                    setScreen("home");
+                  }}
+                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid #334155", borderRadius: 12, cursor: "pointer", textAlign: "left", width: "100%", transition: "all 0.2s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "rgba(37,99,235,0.08)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
+                    <span style={{ fontSize: 24 }}>{opt.icon}</span>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: "#e2e8f0" }}>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>)}
+
         {/* HOME */}
         {screen === "home" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
-          <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: 12, padding: "16px 18px", marginBottom: 28, fontSize: 14, lineHeight: 1.6, color: "#94a3b8" }}>👋 <span style={{ color: "#e2e8f0" }}>Welcome!</span> I'm your AI Money Mentor. Pick a tool below to get started.</div>
+          {/* AI CHAT */}
+          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b", borderRadius: 16, marginBottom: 20, overflow: "hidden" }}>
+            <div style={{ padding: "14px 18px", borderBottom: "1px solid #1e293b", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: chatLoading ? "#F59E0B" : "#10B981", animation: chatLoading ? "pulse 1s infinite" : "none" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8" }}>AI Money Mentor</span>
+              <span style={{ fontSize: 11, color: "#475569", marginLeft: "auto" }}>Powered by Claude</span>
+            </div>
+            <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+            <div style={{ maxHeight: 350, overflowY: "auto", padding: "16px 18px" }}>
+              {chatMessages.map((msg, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", marginBottom: 12 }}>
+                  <div style={{
+                    maxWidth: "85%", padding: "12px 16px", borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                    background: msg.role === "user" ? "linear-gradient(135deg, #2563eb, #1d4ed8)" : "rgba(255,255,255,0.05)",
+                    border: msg.role === "user" ? "none" : "1px solid #1e293b",
+                    fontSize: 13, lineHeight: 1.7, color: "#e2e8f0", whiteSpace: "pre-wrap",
+                  }}>{msg.content}</div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
+                  <div style={{ padding: "12px 16px", borderRadius: "14px 14px 14px 4px", background: "rgba(255,255,255,0.05)", border: "1px solid #1e293b", fontSize: 13, color: "#64748b" }}>
+                    Thinking...
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+            <div style={{ padding: "12px 14px", borderTop: "1px solid #1e293b", display: "flex", gap: 10 }}>
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") sendChat(); }}
+                placeholder="Ask me anything about your finances..."
+                style={{ flex: 1, padding: "10px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: 10, color: "#e2e8f0", fontSize: 14, outline: "none" }}
+                onFocus={(e) => e.target.style.borderColor = "#60a5fa"} onBlur={(e) => e.target.style.borderColor = "#334155"}
+              />
+              <button onClick={sendChat} disabled={chatLoading}
+                style={{ padding: "10px 18px", background: chatLoading ? "#334155" : "linear-gradient(135deg, #2563eb, #1d4ed8)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 600, cursor: chatLoading ? "default" : "pointer" }}>
+                Send
+              </button>
+            </div>
+          </div>
+
+          {/* MODULE CARDS */}
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>Tools & Calculators</div>
           <div style={{ display: "grid", gap: 14 }}>
             {Object.entries(MODULES).map(([key, mod]) => (
               <button key={key} onClick={() => openModule(key)} style={{ display: "flex", alignItems: "center", gap: 16, background: "rgba(255,255,255,0.04)", border: "1px solid #334155", borderRadius: 14, padding: "18px 20px", cursor: "pointer", textAlign: "left", width: "100%", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = mod.color} onMouseLeave={(e) => e.currentTarget.style.borderColor = "#334155"}>
