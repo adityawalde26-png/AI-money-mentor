@@ -225,6 +225,63 @@ function SelectField({ label, value, onChange, options }) {
 function Card({ children, style = {} }) { return <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b", borderRadius: 14, padding: "24px 20px", marginBottom: 16, ...style }}>{children}</div>; }
 function PriorityBadge({ priority }) { const c = { HIGH: "#EF4444", MEDIUM: "#F59E0B", LOW: "#10B981" }; return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: c[priority], color: "#0a0a1a" }}>{priority}</span>; }
 
+function BackToChatBtn({ onClick, label = "← Back to Chat — What's next?" }) {
+  return (
+    <button onClick={onClick} style={{ marginTop: 16, width: "100%", padding: "16px", background: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(124,58,237,0.1))", border: "1px solid rgba(37,99,235,0.3)", borderRadius: 14, color: "#60a5fa", fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(37,99,235,0.2), rgba(124,58,237,0.2))"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(124,58,237,0.1))"; }}>
+      🧠 {label}
+    </button>
+  );
+}
+
+const MODULE_PURPOSE = {
+  health: { title: "💊 Money Health Score", what: "A 5-minute financial check-up that scores you across 6 critical dimensions — emergency fund, insurance, investments, debt, taxes, and retirement.", why: "Most people don't know where they stand financially. This gives you a clear picture and tells you exactly what to fix first.", time: "2 min • 12 questions" },
+  tax: { title: "🧾 Tax Wizard", what: "Compares your tax under Old vs New regime with your actual numbers, and finds deductions you might be missing.", why: "Picking the wrong tax regime can cost you ₹15,000-₹50,000 per year. Most people guess instead of calculating.", time: "1 min • 5 inputs" },
+  fire: { title: "🔥 FIRE Path Planner", what: "Calculates exactly how much money you need to retire, and the monthly SIP required to get there — adjusted for inflation.", why: "Without a number, retirement planning is just wishful thinking. This gives you a concrete, actionable target.", time: "1 min • 5 inputs" },
+  mf: { title: "🔬 MF Portfolio X-Ray", what: "Checks if your mutual funds are secretly holding the same stocks, how much fees are eating your returns, and whether you're actually beating the market.", why: "70% of investors own overlapping funds without knowing. You think you're diversified — but your money is concentrated in the same 10 stocks.", time: "1 min • Select your funds" },
+  couple: { title: "💑 Couple's Money Planner", what: "Optimizes tax regime, deductions, SIP splits, and insurance across both partners' incomes to maximize savings.", why: "Two-income households can save ₹50,000-₹2,00,000 per year in taxes alone by splitting deductions smartly. Most couples don't optimize.", time: "3 min • Both partners' data" },
+  life: { title: "🎯 Life Event Advisor", what: "Gives you a priority-ordered financial action plan for major life events — bonus, marriage, new baby, or inheritance.", why: "When big money moments happen, most people either panic-spend or freeze. This tells you exactly what to do, in what order, with specific amounts.", time: "1 min • Pick event + 4 questions" },
+};
+
+function ModulePurpose({ moduleKey }) {
+  const p = MODULE_PURPOSE[moduleKey];
+  if (!p) return null;
+  return (
+    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b", borderRadius: 14, padding: "20px", marginBottom: 16 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0", marginTop: 0, marginBottom: 10 }}>{p.title}</h3>
+      <p style={{ fontSize: 13, color: "#cbd5e1", margin: "0 0 10px", lineHeight: 1.6 }}>{p.what}</p>
+      <p style={{ fontSize: 13, color: "#94a3b8", margin: "0 0 10px", lineHeight: 1.6, fontStyle: "italic" }}>Why it matters: {p.why}</p>
+      <div style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+        {p.time}
+      </div>
+    </div>
+  );
+}
+
+function AIInsightCard({ insight, loading }) {
+  if (!loading && !insight) return null;
+  return (
+    <div style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(124,58,237,0.08))", border: "1px solid rgba(37,99,235,0.25)", borderRadius: 14, padding: "20px", marginTop: 16, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ fontSize: 18 }}>🧠</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#60a5fa" }}>AI Analysis</span>
+        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "rgba(96,165,250,0.15)", color: "#60a5fa", fontWeight: 600 }}>Powered by Gemini</span>
+      </div>
+      {loading ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <div style={{ width: 16, height: 16, border: "2px solid #334155", borderTopColor: "#60a5fa", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+          <span style={{ fontSize: 13, color: "#94a3b8" }}>Generating personalized analysis...</span>
+        </div>
+      ) : (
+        <p style={{ fontSize: 13, color: "#cbd5e1", margin: 0, lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{insight}</p>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ───
 export default function MoneyMentor() {
   const [screen, setScreen] = useState("landing");
@@ -241,6 +298,7 @@ export default function MoneyMentor() {
   const [mfFunds, setMfFunds] = useState([{ name: "", invested: "" }]); const [mfResult, setMfResult] = useState(null);
   const [p1, setP1] = useState({ income: "", expenses: "", sec80c: "", sec80d: "", nps: "", hra: "", savings: "" }); const [p2, setP2] = useState({ income: "", expenses: "", sec80c: "", sec80d: "", nps: "", hra: "", savings: "" }); const [coupleResult, setCoupleResult] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null); const [lifeAnswers, setLifeAnswers] = useState({}); const [lifeResult, setLifeResult] = useState(null);
+  const [aiInsight, setAiInsight] = useState(""); const [aiInsightLoading, setAiInsightLoading] = useState(false);
   // AI Chat
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
@@ -251,7 +309,169 @@ export default function MoneyMentor() {
   const initChat = (profile) => {
     const concernMap = { "saving_tax": "tax optimization", "retirement": "retirement planning", "investing": "investment strategy", "debt": "debt management", "insurance": "insurance gaps", "general": "overall financial health" };
     const concern = concernMap[profile.concern] || "your finances";
-    setChatMessages([{ role: "assistant", content: `Hey ${profile.name}! 👋 Great to meet you.\n\nBased on what you told me, I can see ${concern} is on your mind. That's a smart thing to focus on${profile.age ? " at " + profile.age : ""}.\n\nI'm here to help — ask me anything, or jump into one of the tools below. Here are some things I can help with:\n\n• Personalized tax advice for your income level\n• How much you need to retire comfortably\n• Whether your mutual funds overlap\n• What to do with a bonus, inheritance, or life event\n\nWhat's on your mind?` }]);
+    setChatMessages([{ role: "assistant", content: `Hey ${profile.name}! 👋 Great to meet you.\n\nI can see ${concern} is on your mind. I'm here to help — just tell me what you'd like to do. For example:\n\n• "Help me plan retirement"\n• "Compare my tax regimes"\n• "I got a 5 lakh bonus"\n• "Check my financial health"\n• Or just ask me any money question!` }]);
+  };
+
+  const getAIInsight = async (prompt) => {
+    setAiInsight(""); setAiInsightLoading(true);
+    try {
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=AIzaSyC6kLXxDF89EWXsUZvlqeoKZ9iOOErCfjk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: "You are AI Money Mentor. Give a personalized, conversational financial analysis in 3-4 short paragraphs. Be specific with numbers. Use plain English, no jargon. Use rupee sign. Reference Indian instruments where relevant. No markdown formatting. Address the user as " + (userProfile.name || "friend") + ", age " + (userProfile.age || "unknown") + "." }] },
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+        }),
+      });
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      setAiInsight(text);
+    } catch (e) {
+      setAiInsight("");
+    }
+    setAiInsightLoading(false);
+  };
+
+  // Parse natural language amounts: "1 lakh", "50k", "1.5 crore", "12,00,000", "one lakh", typos
+  const parseINR = (text) => {
+    const t = text.toLowerCase().replace(/,/g, '').replace(/rs\.?|₹|inr/g, '').replace(/per month|monthly|per year|annual|yearly|pm|pa/g, '').trim();
+    // Zero/none/no
+    if (t.match(/^(0|zero|none|no|nil|nahi|nah|na|nothing|dont have|don't have|kuch nahi|kuch ni)$/)) return 0;
+    // Word numbers
+    if (t.match(/\b(one|ek)\b.*\b(lakh|lac|l)\b/)) return 100000;
+    if (t.match(/\b(two|do)\b.*\b(lakh|lac|l)\b/)) return 200000;
+    if (t.match(/\b(five|panch|paanch)\b.*\b(lakh|lac|l)\b/)) return 500000;
+    if (t.match(/\b(ten|das)\b.*\b(lakh|lac|l)\b/)) return 1000000;
+    if (t.match(/\b(one|ek)\b.*\b(crore|cr)\b/)) return 10000000;
+    // Numeric patterns
+    let match;
+    match = t.match(/([\d.]+)\s*(crore|cr|cror|crr)/);
+    if (match) return Math.round(parseFloat(match[1]) * 10000000);
+    match = t.match(/([\d.]+)\s*(lakh|lac|l|lkh|lak|lakhs)\b/);
+    if (match) return Math.round(parseFloat(match[1]) * 100000);
+    match = t.match(/([\d.]+)\s*(k|thousand|hazar|hazaar)/);
+    if (match) return Math.round(parseFloat(match[1]) * 1000);
+    match = t.match(/([\d.]+)\s*(lpa|lakhs? per annum)/);
+    if (match) return Math.round(parseFloat(match[1]) * 100000);
+    // Plain number
+    const num = parseFloat(t.replace(/[^0-9.]/g, ''));
+    if (!isNaN(num) && num > 0) return Math.round(num);
+    // Age-like single/double digit
+    const ageNum = parseInt(t.replace(/[^0-9]/g, ''));
+    if (!isNaN(ageNum) && ageNum > 0) return ageNum;
+    return null;
+  };
+
+  // Conversational flow state
+  const [chatFlow, setChatFlow] = useState(null); // { type: 'fire'|'tax'|..., step: 0, data: {} }
+
+  const CHAT_FLOWS = {
+    fire: {
+      steps: [
+        { key: "age", q: `What's your current age?`, prefill: () => userProfile.age || null },
+        { key: "income", q: "What's your monthly income?  (e.g. '1.2 lakh', '80k', '50000')" },
+        { key: "expenses", q: "And your monthly expenses?" },
+        { key: "savings", q: "How much do you have saved/invested currently? (total across all investments)" },
+        { key: "retireAge", q: "At what age do you want to retire?" },
+      ],
+    },
+    tax: {
+      steps: [
+        { key: "income", q: "What's your gross annual income? (e.g. '12 lakh', '18 lpa')" },
+        { key: "sec80c", q: "How much do you invest under Section 80C? (PPF, ELSS, EPF, LIC — max ₹1.5L)\n\nType 0 if none." },
+        { key: "sec80d", q: "Health insurance premium under Section 80D? (self + parents — max ₹75K)\n\nType 0 if none." },
+        { key: "nps", q: "Any NPS contribution under 80CCD(1B)? (max ₹50K extra deduction)\n\nType 0 if none." },
+        { key: "hra", q: "HRA exemption amount? If you don't pay rent or aren't sure, type 0." },
+      ],
+    },
+    health: { steps: [] },
+  };
+
+  const startFlow = (type, msgs) => {
+    const flow = CHAT_FLOWS[type];
+    if (!flow || flow.steps.length === 0) {
+      // For health score and modules without chat flow, open directly
+      openModule(type);
+      return;
+    }
+    const prefillVal = flow.steps[0].prefill ? flow.steps[0].prefill() : null;
+    if (prefillVal) {
+      const data = { [flow.steps[0].key]: prefillVal };
+      if (flow.steps.length > 1) {
+        setChatFlow({ type, step: 1, data });
+        setChatMessages([...msgs, { role: "assistant", content: `Got it, you're ${prefillVal} years old. ${flow.steps[1].q}` }]);
+      }
+    } else {
+      setChatFlow({ type, step: 0, data: {} });
+      setChatMessages([...msgs, { role: "assistant", content: flow.steps[0].q }]);
+    }
+  };
+
+  const processFlowStep = (userMsg, newMessages) => {
+    const flow = CHAT_FLOWS[chatFlow.type];
+    const currentStep = flow.steps[chatFlow.step];
+    const parsed = currentStep.key === "age" || currentStep.key === "retireAge" 
+      ? parseInt(userMsg.replace(/[^0-9]/g, '')) 
+      : parseINR(userMsg);
+    
+    if (!parsed && parsed !== 0) {
+      setChatMessages([...newMessages, { role: "assistant", content: `Hmm, I didn't catch that. Could you enter a number? For example: "1.2 lakh" or "50000" or "80k"` }]);
+      return;
+    }
+
+    const newData = { ...chatFlow.data, [currentStep.key]: parsed };
+    const nextStep = chatFlow.step + 1;
+
+    if (nextStep < flow.steps.length) {
+      const nextQ = flow.steps[nextStep];
+      const prefillVal = nextQ.prefill ? nextQ.prefill() : null;
+      if (prefillVal) {
+        newData[nextQ.key] = prefillVal;
+        // Skip prefilled step
+        const stepAfter = nextStep + 1;
+        if (stepAfter < flow.steps.length) {
+          setChatFlow({ ...chatFlow, step: stepAfter, data: newData });
+          setChatMessages([...newMessages, { role: "assistant", content: `Got it! ${flow.steps[stepAfter].q}` }]);
+        }
+      } else {
+        setChatFlow({ ...chatFlow, step: nextStep, data: newData });
+        setChatMessages([...newMessages, { role: "assistant", content: `Got it! ${nextQ.q}` }]);
+      }
+    } else {
+      // Flow complete — trigger the module
+      setChatFlow(null);
+      if (chatFlow.type === "fire") {
+        setFireAge(String(newData.age || "25"));
+        setFireIncome(String(newData.income || "0"));
+        setFireExpenses(String(newData.expenses || "0"));
+        setFireSavings(String(newData.savings || "0"));
+        setFireTargetAge(String(newData.retireAge || "50"));
+        const result = computeFIRE(newData.age || 25, newData.income || 0, newData.expenses || 0, newData.savings || 0, newData.retireAge || 50, 6, 12);
+        setFireResult(result);
+        getAIInsight(`Analyze this FIRE retirement plan for an Indian aged ${newData.age}: Monthly income ${newData.income}, expenses ${newData.expenses}, current savings ${newData.savings}, wants to retire at ${newData.retireAge}. Corpus needed: ${result.corpusNeeded}, monthly SIP needed: ${result.monthlySIP}, savings rate: ${result.savingsRate}%, gap: ${result.gap}. Give personalized advice on whether this is realistic and what they should do.`);
+        setChatMessages([...newMessages, { role: "assistant", content: `Crunching your numbers... Here's your FIRE plan! 🔥` }]);
+        setTimeout(() => { setActiveModule("fire"); setScreen("module"); }, 800);
+      }
+      if (chatFlow.type === "tax") {
+        setTaxIncome(String(newData.income || "0"));
+        setTax80c(String(newData.sec80c || "0"));
+        setTax80d(String(newData.sec80d || "0"));
+        setTaxNps(String(newData.nps || "0"));
+        setTaxHra(String(newData.hra || "0"));
+        const d = { sec80c: Math.min(newData.sec80c || 0, 150000), sec80d: Math.min(newData.sec80d || 0, 75000), nps80ccd: Math.min(newData.nps || 0, 50000), hra: newData.hra || 0 };
+        const o = computeTax(newData.income || 0, d, "old");
+        const n = computeTax(newData.income || 0, {}, "new");
+        const s = o.tax - n.tax;
+        const md = [];
+        if ((newData.sec80c || 0) < 150000) md.push({ name: "Section 80C", max: 150000, used: newData.sec80c || 0, tip: "ELSS, PPF, EPF, LIC, SCSS, 5-year FD, tuition fees" });
+        if ((newData.sec80d || 0) < 50000) md.push({ name: "Section 80D", max: 75000, used: newData.sec80d || 0, tip: "Health insurance — self (₹25K) + parents (₹25K-₹50K)" });
+        if ((newData.nps || 0) < 50000) md.push({ name: "80CCD(1B) — NPS", max: 50000, used: newData.nps || 0, tip: "Additional ₹50K for NPS, over and above 80C" });
+        setTaxResult({ oldResult: o, newResult: n, savings: s, better: s > 0 ? "new" : "old", missedDeductions: md });
+        getAIInsight(`Analyze this tax situation for an Indian aged ${userProfile.age || "25-30"}: Annual income ${newData.income}. Old regime tax: ${o.tax}, New regime tax: ${n.tax}. Better regime: ${s > 0 ? "new" : "old"}, saves ${Math.abs(s)}. Deductions used — 80C: ${newData.sec80c || 0}/150000, 80D: ${newData.sec80d || 0}/75000, NPS: ${newData.nps || 0}/50000, HRA: ${newData.hra || 0}. Missed deductions: ${md.length}. Give specific advice on optimizing their tax.`);
+        setChatMessages([...newMessages, { role: "assistant", content: `Analyzing your tax situation... Here's the comparison! 🧾` }]);
+        setTimeout(() => { setActiveModule("tax"); setScreen("module"); }, 800);
+      }
+    }
   };
 
   useEffect(() => { if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
@@ -276,6 +496,45 @@ export default function MoneyMentor() {
     setChatInput("");
     const newMessages = [...chatMessages, { role: "user", content: userMsg }];
     setChatMessages(newMessages);
+
+    // If we're in a conversational flow, process the step
+    if (chatFlow) {
+      processFlowStep(userMsg, newMessages);
+      return;
+    }
+
+    // Detect intent to start a flow
+    const m = userMsg.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    if (m.match(/retir|fire|retiremnt|retierment|retrie|pension|old age|stop work|corpus need|plan for future|how much.*(need|save)|financial independence|freedm|freedome/)) {
+      startFlow("fire", newMessages);
+      return;
+    }
+    if (m.match(/tax|regim|regime|80c|80d|deducti|itr|save tax|incometax|income tax|old regim|new regim|which regime|tex|taxs|taks/)) {
+      startFlow("tax", newMessages);
+      return;
+    }
+    if (m.match(/health score|financial health|check ?up|how am i doing|financial check|score|diagnos|checkup|helth|my financ|am i ok/)) {
+      setChatMessages([...newMessages, { role: "assistant", content: "Let's check your financial health! I'll ask you 12 quick questions across 6 dimensions. Launching now..." }]);
+      setTimeout(() => openModule("health"), 800);
+      return;
+    }
+    if (m.match(/mutual fund|mf |portfolio|overlap|x ?ray|fund analysis|my funds|sip check|which fund/)) {
+      setChatMessages([...newMessages, { role: "assistant", content: "Let's analyze your mutual fund portfolio! I'll open the X-Ray tool where you can select your funds." }]);
+      setTimeout(() => openModule("mf"), 800);
+      return;
+    }
+    if (m.match(/couple|partner|spouse|joint|married|both income|husband|wife|dual income|two income|2 income/)) {
+      setChatMessages([...newMessages, { role: "assistant", content: "Smart! Let's optimize finances across both incomes. Opening the Couple's Planner..." }]);
+      setTimeout(() => openModule("couple"), 800);
+      return;
+    }
+    if (m.match(/bonus|inheritance|baby|wedding|marr|life event|new ?born|got money|inhertance|lump ?sum|received money|gift money|windfall/)) {
+      setChatMessages([...newMessages, { role: "assistant", content: "Life events need special financial planning! Let me open the Life Event Advisor where you can pick your situation." }]);
+      setTimeout(() => openModule("life"), 800);
+      return;
+    }
+
+    // General AI chat via Gemini
     setChatLoading(true);
     try {
       const conversationHistory = newMessages.map(m => ({
@@ -286,7 +545,7 @@ export default function MoneyMentor() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: "You are AI Money Mentor, a personal finance advisor for Indian users. Warm, friendly tone. Concise responses (3-4 short paragraphs max). Use rupee sign. Reference Indian instruments: PPF, NPS, ELSS, SIPs, EPF, 80C/80D, HRA, old vs new tax regime. When relevant suggest app tools: Money Health Score, Tax Wizard, FIRE Path Planner, MF Portfolio X-Ray, Couple's Money Planner, Life Event Advisor. Give actionable advice with specific numbers. No markdown formatting like ** or ##. The user's name is " + (userProfile.name || "friend") + "." }] },
+          system_instruction: { parts: [{ text: "You are AI Money Mentor, a personal finance advisor for Indian users. Warm, friendly tone. Concise responses (3-4 short paragraphs max). Use rupee sign. Reference Indian instruments: PPF, NPS, ELSS, SIPs, EPF, 80C/80D, HRA, old vs new tax regime. Suggest these tools when relevant: Money Health Score, Tax Wizard, FIRE Path Planner, MF Portfolio X-Ray, Couple's Money Planner, Life Event Advisor. Give actionable advice with specific numbers. No markdown formatting like ** or ##. User's name is " + (userProfile.name || "friend") + ", age " + (userProfile.age || "unknown") + "." }] },
           contents: conversationHistory,
         }),
       });
@@ -305,9 +564,21 @@ export default function MoneyMentor() {
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [healthStep, screen, healthResult, taxResult, fireResult, mfResult, coupleResult, lifeResult, selectedEvent]);
 
-  const openModule = (key) => { setActiveModule(key); setScreen("module"); setHealthStep(0); setHealthAnswers({}); setHealthResult(null); setTaxResult(null); setFireResult(null); setMfResult(null); setCoupleResult(null); setLifeResult(null); setSelectedEvent(null); setLifeAnswers({}); setMfFunds([{ name: "", invested: "" }]); };
+  const openModule = (key) => { 
+    setActiveModule(key); setScreen("module"); setHealthStep(0); setHealthAnswers({}); setHealthResult(null); setTaxResult(null); setFireResult(null); setMfResult(null); setCoupleResult(null); setLifeResult(null); setSelectedEvent(null); setLifeAnswers({}); setMfFunds([{ name: "", invested: "" }]); 
+    setAiInsight(""); setAiInsightLoading(false);
+    // Pre-fill age from onboarding
+    if (key === "fire" && userProfile.age) setFireAge(userProfile.age);
+  };
+  
+  const returnToChat = (moduleName, followUp) => {
+    setChatMessages(prev => [...prev, { role: "assistant", content: followUp }]);
+    setScreen("home");
+    setActiveModule(null);
+  };
+
   const goHome = () => { setScreen("home"); setActiveModule(null); };
-  const handleHealthAnswer = (qId, score) => { const na = { ...healthAnswers, [qId]: score }; setHealthAnswers(na); if (healthStep < healthQuestions.length - 1) setTimeout(() => setHealthStep(healthStep + 1), 300); else { const r = computeHealthScore(na); setTimeout(() => setHealthResult({ ...r, recs: getRecommendations(r.dimAverages) }), 400); } };
+  const handleHealthAnswer = (qId, score) => { const na = { ...healthAnswers, [qId]: score }; setHealthAnswers(na); if (healthStep < healthQuestions.length - 1) setTimeout(() => setHealthStep(healthStep + 1), 300); else { const r = computeHealthScore(na); const recs = getRecommendations(r.dimAverages); setTimeout(() => { setHealthResult({ ...r, recs }); getAIInsight(`Analyze this person's financial health score. Overall: ${r.overall}/100. Dimensions: ${Object.entries(r.dimAverages).map(([d,v]) => d + ": " + v.toFixed(1) + "/10").join(", ")}. Weak areas: ${recs.filter(r=>r.priority==="HIGH").map(r=>r.dim).join(", ") || "none"}. Give specific actionable advice for an Indian aged ${userProfile.age || "25-30"}.`); }, 400); } };
   const runTaxWizard = () => { const inc = parseInt(taxIncome) || 0; const d = { sec80c: Math.min(parseInt(tax80c) || 0, 150000), sec80d: Math.min(parseInt(tax80d) || 0, 75000), nps80ccd: Math.min(parseInt(taxNps) || 0, 50000), hra: parseInt(taxHra) || 0 }; const o = computeTax(inc, d, "old"); const n = computeTax(inc, {}, "new"); const s = o.tax - n.tax; const md = []; if ((parseInt(tax80c) || 0) < 150000) md.push({ name: "Section 80C", max: 150000, used: parseInt(tax80c) || 0, tip: "ELSS, PPF, EPF, LIC, SCSS, 5-year FD, tuition fees" }); if ((parseInt(tax80d) || 0) < 50000) md.push({ name: "Section 80D", max: 75000, used: parseInt(tax80d) || 0, tip: "Health insurance — self (₹25K) + parents (₹25K-₹50K)" }); if ((parseInt(taxNps) || 0) < 50000) md.push({ name: "80CCD(1B) — NPS", max: 50000, used: parseInt(taxNps) || 0, tip: "Additional ₹50K for NPS, over and above 80C" }); setTaxResult({ oldResult: o, newResult: n, savings: s, better: s > 0 ? "new" : "old", missedDeductions: md }); };
   const runFIRE = () => setFireResult(computeFIRE(parseInt(fireAge) || 25, parseInt(fireIncome) || 0, parseInt(fireExpenses) || 0, parseInt(fireSavings) || 0, parseInt(fireTargetAge) || 50, parseFloat(fireInflation) || 6, parseFloat(fireReturn) || 12));
   const runMF = () => { const sel = mfFunds.filter(f => f.name && f.invested).map(f => ({ name: f.name, invested: parseInt(f.invested) || 0 })); setMfResult(analyzePortfolio(sel)); };
@@ -321,8 +592,8 @@ export default function MoneyMentor() {
       {[["10%", "70%", "#10B981", 400], ["60%", "10%", "#F59E0B", 350], ["80%", "80%", "#8B5CF6", 300]].map(([t, l, c, s], i) => <div key={i} style={{ position: "fixed", top: t, left: l, width: s, height: s, borderRadius: "50%", background: c, filter: "blur(120px)", opacity: 0.07, pointerEvents: "none", zIndex: 0 }} />)}
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 520, margin: "0 auto", padding: "0 20px" }} ref={scrollRef}>
-        <div style={{ paddingTop: 40, paddingBottom: 8, textAlign: "center", display: screen === "landing" || screen === "onboard" ? "none" : "block" }}>
-          {screen !== "home" && screen !== "landing" && screen !== "onboard" && <button onClick={goHome} style={{ position: "absolute", left: 20, top: 44, background: "none", border: "1px solid #334155", color: "#94a3b8", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13 }}>← Back</button>}
+        <div style={{ paddingTop: 40, paddingBottom: 8, textAlign: "center", display: screen === "landing" || screen === "onboard" || screen === "tools" ? "none" : "block" }}>
+          {screen !== "home" && screen !== "landing" && screen !== "onboard" && screen !== "tools" && <button onClick={goHome} style={{ position: "absolute", left: 20, top: 44, background: "none", border: "1px solid #334155", color: "#94a3b8", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13 }}>← Back</button>}
           <div style={{ fontSize: 13, letterSpacing: 4, color: "#64748b", textTransform: "uppercase", marginBottom: 8 }}>AI-Powered</div>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, background: "linear-gradient(135deg, #60a5fa, #10B981, #F59E0B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Money Mentor</h1>
           <p style={{ color: "#64748b", fontSize: 14, marginTop: 6, marginBottom: 0 }}>{screen === "home" ? "Your personal AI financial planning assistant" : MODULES[activeModule]?.name}</p>
@@ -416,18 +687,17 @@ export default function MoneyMentor() {
             <div style={{ animation: "slideIn 0.4s ease" }}>
               <div style={{ fontSize: 40, marginBottom: 16 }}>🎂</div>
               <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px", color: "#e2e8f0" }}>How old are you, {userProfile.name}?</h2>
-              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>This helps me tailor advice to your life stage.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {[{ label: "18–25", value: "22", emoji: "🎓" }, { label: "26–35", value: "30", emoji: "💼" }, { label: "36–45", value: "40", emoji: "🏠" }, { label: "46+", value: "50", emoji: "🌅" }].map(opt => (
-                  <button key={opt.label} onClick={() => { setUserProfile({ ...userProfile, age: opt.value }); setOnboardStep(2); }}
-                    style={{ padding: "20px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #334155", borderRadius: 14, cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "rgba(37,99,235,0.08)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>{opt.emoji}</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0" }}>{opt.label}</div>
-                  </button>
-                ))}
-              </div>
+              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>Type your exact age.</p>
+              <input value={userProfile.age} onChange={(e) => setUserProfile({ ...userProfile, age: e.target.value.replace(/[^0-9]/g, '') })}
+                placeholder="e.g. 25"
+                style={{ width: "100%", padding: "16px 20px", background: "#0f172a", border: "2px solid #334155", borderRadius: 14, color: "#e2e8f0", fontSize: 18, outline: "none", boxSizing: "border-box", textAlign: "center" }}
+                onFocus={(e) => e.target.style.borderColor = "#2563eb"} onBlur={(e) => e.target.style.borderColor = "#334155"}
+                onKeyDown={(e) => { if (e.key === "Enter" && userProfile.age) setOnboardStep(2); }}
+                autoFocus />
+              <button onClick={() => { if (userProfile.age) setOnboardStep(2); }}
+                style={{ marginTop: 20, width: "100%", padding: "14px", background: userProfile.age ? "linear-gradient(135deg, #2563eb, #7c3aed)" : "#1e293b", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: userProfile.age ? "pointer" : "default", transition: "all 0.3s" }}>
+                Continue
+              </button>
             </div>
           )}
 
@@ -463,54 +733,126 @@ export default function MoneyMentor() {
           )}
         </div>)}
 
-        {/* HOME */}
-        {screen === "home" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
-          {/* AI CHAT */}
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b", borderRadius: 16, marginBottom: 20, overflow: "hidden" }}>
-            <div style={{ padding: "14px 18px", borderBottom: "1px solid #1e293b", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: chatLoading ? "#F59E0B" : "#10B981", animation: chatLoading ? "pulse 1s infinite" : "none" }} />
+        {/* HOME — CHAT FIRST */}
+        {screen === "home" && (<div style={{ paddingTop: 16, paddingBottom: 80, display: "flex", flexDirection: "column", minHeight: "calc(100vh - 120px)" }}>
+          <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } @keyframes dotBounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }`}</style>
+          
+          {/* Chat Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, padding: "8px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8" }}>AI Money Mentor</span>
-              <span style={{ fontSize: 11, color: "#475569", marginLeft: "auto" }}>Powered by Claude</span>
             </div>
-            <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
-            <div style={{ maxHeight: 350, overflowY: "auto", padding: "16px 18px" }}>
-              {chatMessages.map((msg, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", marginBottom: 12 }}>
-                  <div style={{
-                    maxWidth: "85%", padding: "12px 16px", borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                    background: msg.role === "user" ? "linear-gradient(135deg, #2563eb, #1d4ed8)" : "rgba(255,255,255,0.05)",
-                    border: msg.role === "user" ? "none" : "1px solid #1e293b",
-                    fontSize: 13, lineHeight: 1.7, color: "#e2e8f0", whiteSpace: "pre-wrap",
-                  }}>{msg.content}</div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
-                  <div style={{ padding: "12px 16px", borderRadius: "14px 14px 14px 4px", background: "rgba(255,255,255,0.05)", border: "1px solid #1e293b", fontSize: 13, color: "#64748b" }}>
-                    Thinking...
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-            <div style={{ padding: "12px 14px", borderTop: "1px solid #1e293b", display: "flex", gap: 10 }}>
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") sendChat(); }}
-                placeholder="Ask me anything about your finances..."
-                style={{ flex: 1, padding: "10px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: 10, color: "#e2e8f0", fontSize: 14, outline: "none" }}
-                onFocus={(e) => e.target.style.borderColor = "#60a5fa"} onBlur={(e) => e.target.style.borderColor = "#334155"}
-              />
-              <button onClick={sendChat} disabled={chatLoading}
-                style={{ padding: "10px 18px", background: chatLoading ? "#334155" : "linear-gradient(135deg, #2563eb, #1d4ed8)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 600, cursor: chatLoading ? "default" : "pointer" }}>
-                Send
-              </button>
-            </div>
+            <button onClick={() => { 
+              setChatMessages([{ role: "assistant", content: `Fresh start! What would you like to help with, ${userProfile.name || "friend"}?\n\nYou can ask me about taxes, retirement, investments, or any money question.` }]); 
+              setChatFlow(null); 
+            }}
+              style={{ padding: "4px 12px", background: "none", border: "1px solid #334155", borderRadius: 8, color: "#64748b", fontSize: 11, cursor: "pointer" }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = "#64748b"}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = "#334155"}>
+              ↻ Clear Chat
+            </button>
           </div>
 
-          {/* MODULE CARDS */}
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>Tools & Calculators</div>
+          {/* Chat Messages */}
+          <div style={{ flex: 1, overflowY: "auto", marginBottom: 12 }}>
+            {chatMessages.map((msg, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", marginBottom: 14 }}>
+                {msg.role !== "user" && <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #2563eb, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, marginRight: 10, marginTop: 2 }}>🧠</div>}
+                <div style={{ maxWidth: "80%" }}>
+                  <div style={{
+                    padding: "14px 18px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                    background: msg.role === "user" ? "linear-gradient(135deg, #2563eb, #1d4ed8)" : "rgba(255,255,255,0.05)",
+                    border: msg.role === "user" ? "none" : "1px solid #1e293b",
+                    fontSize: 14, lineHeight: 1.7, color: "#e2e8f0", whiteSpace: "pre-wrap",
+                  }}>{msg.content}</div>
+                  {/* Inline tool buttons — show after AI messages that mention tools */}
+                  {msg.role === "assistant" && (() => {
+                    const t = msg.content.toLowerCase();
+                    const tools = [];
+                    if (t.includes("tax wizard") || t.includes("tax regime") || t.includes("compare old")) tools.push({ key: "tax", label: "Open Tax Wizard", icon: "🧾", color: "#F59E0B" });
+                    if (t.includes("fire") || t.includes("retirement") || t.includes("corpus") || t.includes("sip target")) tools.push({ key: "fire", label: "Open FIRE Planner", icon: "🔥", color: "#EF4444" });
+                    if (t.includes("health score") || t.includes("financial check") || t.includes("check-up") || t.includes("coverage")) tools.push({ key: "health", label: "Take Health Score", icon: "💊", color: "#10B981" });
+                    if (t.includes("x-ray") || t.includes("portfolio") || t.includes("overlap") || t.includes("mutual fund")) tools.push({ key: "mf", label: "Open MF X-Ray", icon: "🔬", color: "#8B5CF6" });
+                    if (t.includes("couple") || t.includes("both incomes") || t.includes("partner")) tools.push({ key: "couple", label: "Open Couple's Planner", icon: "💑", color: "#EC4899" });
+                    if (t.includes("life event") || t.includes("bonus") || t.includes("new baby") || t.includes("action plan")) tools.push({ key: "life", label: "Open Life Advisor", icon: "🎯", color: "#06B6D4" });
+                    if (tools.length === 0) return null;
+                    return (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+                        {tools.map(tool => (
+                          <button key={tool.key} onClick={() => openModule(tool.key)}
+                            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: `${tool.color}15`, border: `1px solid ${tool.color}40`, borderRadius: 10, color: tool.color, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = `${tool.color}25`; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = `${tool.color}15`; }}>
+                            <span>{tool.icon}</span> {tool.label}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ))}
+            {chatLoading && (
+              <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 14 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #2563eb, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, marginRight: 10 }}>🧠</div>
+                <div style={{ padding: "14px 18px", borderRadius: "18px 18px 18px 4px", background: "rgba(255,255,255,0.05)", border: "1px solid #1e293b", display: "flex", gap: 6 }}>
+                  {[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#64748b", animation: `dotBounce 1.4s ease-in-out ${i * 0.16}s infinite` }} />)}
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick suggestion chips — only show when few messages */}
+          {chatMessages.length <= 2 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              {["Help me plan retirement", "Compare my tax regimes", "Check my financial health", "I got a bonus"].map(s => (
+                <button key={s} onClick={() => { 
+                  const newMsgs = [...chatMessages, { role: "user", content: s }];
+                  setChatMessages(newMsgs);
+                  // Detect intent
+                  const m = s.toLowerCase();
+                  if (m.match(/retire/)) { startFlow("fire", newMsgs); }
+                  else if (m.match(/tax/)) { startFlow("tax", newMsgs); }
+                  else if (m.match(/health/)) { setChatMessages([...newMsgs, { role: "assistant", content: "Let's check your financial health! Launching the quiz now..." }]); setTimeout(() => openModule("health"), 800); }
+                  else if (m.match(/bonus/)) { setChatMessages([...newMsgs, { role: "assistant", content: "Let's plan what to do with your bonus! Opening the advisor..." }]); setTimeout(() => openModule("life"), 800); }
+                }}
+                  style={{ padding: "8px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid #334155", borderRadius: 20, color: "#94a3b8", fontSize: 12, cursor: "pointer", transition: "all 0.2s" }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = "#60a5fa"}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = "#334155"}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Chat Input — fixed at bottom feel */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button onClick={() => setScreen("tools")}
+              style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,0.05)", border: "1px solid #334155", color: "#94a3b8", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              title="All Tools">⚡</button>
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") sendChat(); }}
+              placeholder="Ask me anything..."
+              style={{ flex: 1, padding: "12px 16px", background: "#0f172a", border: "1px solid #334155", borderRadius: 14, color: "#e2e8f0", fontSize: 14, outline: "none" }}
+              onFocus={(e) => e.target.style.borderColor = "#60a5fa"} onBlur={(e) => e.target.style.borderColor = "#334155"}
+            />
+            <button onClick={sendChat} disabled={chatLoading}
+              style={{ width: 42, height: 42, borderRadius: 12, background: chatLoading ? "#334155" : "linear-gradient(135deg, #2563eb, #1d4ed8)", border: "none", color: "#fff", fontSize: 16, cursor: chatLoading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              ↑
+            </button>
+          </div>
+        </div>)}
+
+        {/* TOOLS SCREEN */}
+        {screen === "tools" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "#e2e8f0" }}>All Tools</h2>
+            <button onClick={() => setScreen("home")} style={{ background: "none", border: "1px solid #334155", color: "#94a3b8", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13 }}>← Back to Chat</button>
+          </div>
           <div style={{ display: "grid", gap: 14 }}>
             {Object.entries(MODULES).map(([key, mod]) => (
               <button key={key} onClick={() => openModule(key)} style={{ display: "flex", alignItems: "center", gap: 16, background: "rgba(255,255,255,0.04)", border: "1px solid #334155", borderRadius: 14, padding: "18px 20px", cursor: "pointer", textAlign: "left", width: "100%", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = mod.color} onMouseLeave={(e) => e.currentTarget.style.borderColor = "#334155"}>
@@ -520,11 +862,11 @@ export default function MoneyMentor() {
               </button>
             ))}
           </div>
-          <div style={{ marginTop: 32, textAlign: "center", fontSize: 12, color: "#475569", borderTop: "1px solid #1e293b", paddingTop: 20 }}>Built for ET AI Hackathon 2026 • AI Money Mentor</div>
         </div>)}
 
         {/* HEALTH SCORE */}
         {screen === "module" && activeModule === "health" && !healthResult && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <ModulePurpose moduleKey="health" />
           <div style={{ marginBottom: 24 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#64748b", marginBottom: 6 }}><span>{healthQuestions[healthStep].dimension}</span><span>{healthStep + 1}/{healthQuestions.length}</span></div><div style={{ height: 4, borderRadius: 2, background: "#1a1a2e", overflow: "hidden" }}><div style={{ height: "100%", borderRadius: 2, background: "#10B981", width: `${((healthStep + 1) / healthQuestions.length) * 100}%`, transition: "width 0.4s ease" }} /></div></div>
           <Card><p style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.5, marginTop: 0, marginBottom: 20 }}>{healthQuestions[healthStep].q}</p><div style={{ display: "grid", gap: 10 }}>{healthQuestions[healthStep].options.map((opt, i) => (<button key={i} onClick={() => handleHealthAnswer(healthQuestions[healthStep].id, opt.score)} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b", borderRadius: 10, color: "#e2e8f0", fontSize: 14, cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16,185,129,0.08)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}>{opt.label}</button>))}</div></Card>
         </div>)}
@@ -533,11 +875,14 @@ export default function MoneyMentor() {
           <Card style={{ textAlign: "center" }}><AnimatedScore score={healthResult.overall} color={getScoreColor(healthResult.overall)} /><div style={{ fontSize: 18, fontWeight: 700, marginTop: 12, color: getScoreColor(healthResult.overall) }}>{getScoreLabel(healthResult.overall)}</div><p style={{ fontSize: 13, color: "#64748b", margin: "6px 0 0" }}>Your Financial Health Score</p></Card>
           <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", marginTop: 0, marginBottom: 16 }}>DIMENSION BREAKDOWN</h3>{Object.entries(healthResult.dimAverages).map(([d, a]) => <DimensionBar key={d} name={d} score={a} />)}</Card>
           {healthResult.recs.length > 0 && <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", marginTop: 0, marginBottom: 16 }}>AI RECOMMENDATIONS</h3>{healthResult.recs.map((r, i) => (<div key={i} style={{ padding: "14px 16px", borderRadius: 10, marginBottom: 10, background: r.priority === "HIGH" ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${r.priority === "HIGH" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)"}` }}><div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}><PriorityBadge priority={r.priority} /><span style={{ fontSize: 12, color: "#94a3b8" }}>{r.dim}</span></div><p style={{ fontSize: 13, color: "#cbd5e1", margin: 0, lineHeight: 1.6 }}>{r.text}</p></div>))}</Card>}
+          <AIInsightCard insight={aiInsight} loading={aiInsightLoading} />
           <button onClick={() => { setHealthStep(0); setHealthAnswers({}); setHealthResult(null); }} style={{ width: "100%", padding: "14px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 10, color: "#10B981", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>↻ Retake Assessment</button>
+          <BackToChatBtn onClick={() => returnToChat("health", `Your Money Health Score is ${healthResult.overall}/100 (${getScoreLabel(healthResult.overall)}). ${healthResult.recs.length > 0 ? "I noticed some areas to improve — " + healthResult.recs[0].dim + " needs attention." : "Looking solid!"}\n\nWhat would you like to explore next? I can help with tax optimization, retirement planning, or investment analysis.`)} />
         </div>)}
 
         {/* TAX WIZARD */}
         {screen === "module" && activeModule === "tax" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <ModulePurpose moduleKey="tax" />
           <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B", marginTop: 0, marginBottom: 4 }}>Enter Your Details</h3><p style={{ fontSize: 12, color: "#64748b", marginTop: 0, marginBottom: 20 }}>FY 2025-26 • Old vs New regime</p>
             <InputField label="Gross Annual Income (₹)" value={taxIncome} onChange={setTaxIncome} placeholder="e.g. 1200000" />
             <div style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8", marginBottom: 12, marginTop: 20 }}>Deductions (Old Regime)</div>
@@ -551,11 +896,14 @@ export default function MoneyMentor() {
             <Card style={{ textAlign: "center" }}><div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>{taxResult.better === "new" ? "New Regime saves you" : "Old Regime saves you"}</div><div style={{ fontSize: 36, fontWeight: 800, color: "#10B981" }}>{formatINR(Math.abs(taxResult.savings))}</div><div style={{ display: "inline-block", marginTop: 10, padding: "4px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700, background: taxResult.better === "new" ? "rgba(96,165,250,0.1)" : "rgba(245,158,11,0.1)", color: taxResult.better === "new" ? "#60a5fa" : "#F59E0B" }}>{taxResult.better === "new" ? "NEW REGIME WINS" : "OLD REGIME WINS"}</div></Card>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>{[{ l: "Old Regime", d: taxResult.oldResult, c: "#F59E0B" }, { l: "New Regime", d: taxResult.newResult, c: "#60a5fa" }].map(r => (<Card key={r.l} style={{ marginBottom: 0 }}><div style={{ fontSize: 12, color: r.c, fontWeight: 700, marginBottom: 10 }}>{r.l}</div><div style={{ fontSize: 11, color: "#64748b" }}>Deductions</div><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>{formatINR(r.d.totalDeductions)}</div><div style={{ fontSize: 11, color: "#64748b" }}>Taxable Income</div><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>{formatINR(r.d.taxableIncome)}</div><div style={{ fontSize: 11, color: "#64748b" }}>Tax</div><div style={{ fontSize: 18, fontWeight: 800, color: r.c }}>{formatINR(r.d.tax)}</div></Card>))}</div>
             {taxResult.missedDeductions.length > 0 && <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 14, padding: "20px" }}><h3 style={{ fontSize: 14, fontWeight: 700, color: "#EF4444", marginTop: 0, marginBottom: 14 }}>⚠ Missed Deductions</h3>{taxResult.missedDeductions.map((d, i) => (<div key={i} style={{ marginBottom: 12 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>{d.name}</span><span style={{ fontSize: 12, color: "#EF4444" }}>{formatINR(d.used)}/{formatINR(d.max)}</span></div><p style={{ fontSize: 12, color: "#94a3b8", margin: 0 }}>{d.tip}</p></div>))}</div>}
+            <BackToChatBtn onClick={() => returnToChat("tax", `Tax analysis done! The ${taxResult.better === "new" ? "New" : "Old"} regime saves you ${formatINR(Math.abs(taxResult.savings))}. ${taxResult.missedDeductions.length > 0 ? "You're also leaving money on the table with " + taxResult.missedDeductions.length + " unused deductions." : ""}\n\nNow that taxes are sorted, want to check your retirement readiness or analyze your investments?`)} />
+            <AIInsightCard insight={aiInsight} loading={aiInsightLoading} />
           </>)}
         </div>)}
 
         {/* FIRE */}
         {screen === "module" && activeModule === "fire" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <ModulePurpose moduleKey="fire" />
           <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#EF4444", marginTop: 0, marginBottom: 4 }}>FIRE Calculator</h3><p style={{ fontSize: 12, color: "#64748b", marginTop: 0, marginBottom: 20 }}>Financial Independence, Retire Early</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}><InputField label="Your Age" value={fireAge} onChange={setFireAge} placeholder="25" suffix="yrs" /><InputField label="Retire At" value={fireTargetAge} onChange={setFireTargetAge} placeholder="50" suffix="yrs" /></div>
             <InputField label="Monthly Income (₹)" value={fireIncome} onChange={setFireIncome} placeholder="100000" />
@@ -565,15 +913,61 @@ export default function MoneyMentor() {
             <button onClick={runFIRE} style={btnStyle("#EF4444")}>Calculate FIRE Path 🔥</button>
           </Card>
           {fireResult && (<>
-            <Card style={{ textAlign: "center" }}><div style={{ fontSize: 13, color: "#64748b", marginBottom: 4 }}>Corpus needed</div><div style={{ fontSize: 34, fontWeight: 800, color: "#EF4444" }}>{formatINR(fireResult.corpusNeeded)}</div><div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>to retire at {fireTargetAge} (inflation-adjusted)</div></Card>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>{[{ l: "Years", v: `${fireResult.yearsToRetire} yrs`, c: "#60a5fa" }, { l: "Savings Rate", v: `${fireResult.savingsRate}%`, c: fireResult.savingsRate >= 50 ? "#10B981" : "#F59E0B" }, { l: "Savings (FV)", v: formatINR(fireResult.fvCurrentSavings), c: "#8B5CF6" }, { l: "Gap", v: formatINR(fireResult.gap), c: "#F97316" }].map(i => (<Card key={i.l} style={{ marginBottom: 0 }}><div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>{i.l}</div><div style={{ fontSize: 18, fontWeight: 800, color: i.c }}>{i.v}</div></Card>))}</div>
-            <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 14, padding: 20, textAlign: "center", marginBottom: 16 }}><div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6 }}>Monthly SIP Needed</div><div style={{ fontSize: 36, fontWeight: 800, color: "#10B981" }}>{formatINR(fireResult.monthlySIP)}</div><div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>at {fireReturn}% return</div></div>
-            <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", marginTop: 0, marginBottom: 14 }}>ALLOCATION</h3>{[{ n: "Equity Index (Nifty 50/Next 50)", p: 50, c: "#60a5fa" }, { n: "Mid/Small Cap", p: 20, c: "#8B5CF6" }, { n: "Debt / PPF / EPF", p: 20, c: "#10B981" }, { n: "Gold / International", p: 10, c: "#F59E0B" }].map(a => (<div key={a.n} style={{ marginBottom: 12 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}><span style={{ color: "#cbd5e1" }}>{a.n}</span><span style={{ color: a.c, fontWeight: 700 }}>{formatINR(Math.round(fireResult.monthlySIP * a.p / 100))}</span></div><div style={{ height: 6, borderRadius: 3, background: "#1a1a2e", overflow: "hidden" }}><div style={{ height: "100%", borderRadius: 3, background: a.c, width: `${a.p}%` }} /></div></div>))}</Card>
+            <Card style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: "#64748b", marginBottom: 4 }}>Total money you need to retire</div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "#EF4444" }}>{formatINR(fireResult.corpusNeeded)}</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 8, lineHeight: 1.6, textAlign: "left" }}>This is the total amount you need saved up by age {fireTargetAge}. It accounts for inflation — your ₹{fireExpenses ? parseInt(fireExpenses).toLocaleString("en-IN") : "0"}/month expenses today will cost {formatINR(Math.round(fireResult.futureAnnualExpense / 12))}/month by then. The "25x rule" means this corpus can fund your lifestyle for 30+ years in retirement.</div>
+            </Card>
+            
+            <Card>
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: "#e2e8f0" }}>Time to retirement</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: "#60a5fa" }}>{fireResult.yearsToRetire} years</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>From your current age to your target retirement age of {fireTargetAge}. This is how long your money has to grow.</div>
+              </div>
+              
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: "#e2e8f0" }}>Your savings rate</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: fireResult.savingsRate >= 50 ? "#10B981" : fireResult.savingsRate >= 30 ? "#F59E0B" : "#EF4444" }}>{fireResult.savingsRate}%</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>This is how much of your income you're saving (income minus expenses). {fireResult.savingsRate >= 50 ? "Excellent! 50%+ is the gold standard for FIRE." : fireResult.savingsRate >= 30 ? "Decent, but pushing to 50% would accelerate your timeline significantly." : "This is low. Try to cut expenses or increase income to reach at least 30%."}</div>
+              </div>
+              
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: "#e2e8f0" }}>Your current savings will grow to</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: "#8B5CF6" }}>{formatINR(fireResult.fvCurrentSavings)}</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>Your existing ₹{fireSavings ? parseInt(fireSavings).toLocaleString("en-IN") : "0"} invested at {fireReturn}% for {fireResult.yearsToRetire} years will compound to this amount. Compounding does the heavy lifting!</div>
+              </div>
+              
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: "#e2e8f0" }}>Gap still to fill</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: "#F97316" }}>{formatINR(fireResult.gap)}</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>This is the difference between what you need ({formatINR(fireResult.corpusNeeded)}) and what your current savings will become ({formatINR(fireResult.fvCurrentSavings)}). Your monthly SIP needs to fill this gap.</div>
+              </div>
+            </Card>
+
+            <Card style={{ textAlign: "center", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)" }}>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6 }}>Start this monthly SIP to retire on time</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: "#10B981" }}>{formatINR(fireResult.monthlySIP)}</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 8, lineHeight: 1.6, textAlign: "left" }}>If you invest {formatINR(fireResult.monthlySIP)} every month in a diversified portfolio earning ~{fireReturn}% annually, you'll build the {formatINR(fireResult.gap)} gap over {fireResult.yearsToRetire} years. Set up an auto-debit SIP so you never miss a month.</div>
+            </Card>
+
+            <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", marginTop: 0, marginBottom: 6 }}>WHERE TO INVEST YOUR SIP</h3><p style={{ fontSize: 12, color: "#64748b", marginTop: 0, marginBottom: 14 }}>Split your {formatINR(fireResult.monthlySIP)}/month across these categories:</p>{[{ n: "Equity Index (Nifty 50/Next 50)", p: 50, c: "#60a5fa", why: "Your core — low-cost, market-matching returns" }, { n: "Mid/Small Cap Fund", p: 20, c: "#8B5CF6", why: "Higher growth potential, more volatility" }, { n: "Debt / PPF / EPF", p: 20, c: "#10B981", why: "Stability and capital protection" }, { n: "Gold / International", p: 10, c: "#F59E0B", why: "Hedge against INR depreciation and inflation" }].map(a => (<div key={a.n} style={{ marginBottom: 14 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 2 }}><span style={{ color: "#cbd5e1" }}>{a.n}</span><span style={{ color: a.c, fontWeight: 700 }}>{formatINR(Math.round(fireResult.monthlySIP * a.p / 100))}/mo</span></div><div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>{a.why}</div><div style={{ height: 6, borderRadius: 3, background: "#1a1a2e", overflow: "hidden" }}><div style={{ height: "100%", borderRadius: 3, background: a.c, width: `${a.p}%` }} /></div></div>))}</Card>
+            <BackToChatBtn onClick={() => returnToChat("fire", `FIRE plan ready! You need ${formatINR(fireResult.corpusNeeded)} to retire at ${fireTargetAge}. That means a monthly SIP of ${formatINR(fireResult.monthlySIP)}. ${fireResult.savingsRate < 30 ? "Your savings rate is low — we should look at ways to optimize." : "Your savings rate looks healthy!"}\n\nWant to check if your current mutual funds are on track, or optimize your taxes to free up more for investing?`)} />
+            <AIInsightCard insight={aiInsight} loading={aiInsightLoading} />
           </>)}
         </div>)}
 
         {/* MF X-RAY */}
         {screen === "module" && activeModule === "mf" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <ModulePurpose moduleKey="mf" />
           <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#8B5CF6", marginTop: 0, marginBottom: 4 }}>Your Mutual Funds</h3><p style={{ fontSize: 12, color: "#64748b", marginTop: 0, marginBottom: 20 }}>Select funds and enter invested amounts</p>
             {mfFunds.map((fund, idx) => (<div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 120px 36px", gap: 8, marginBottom: 10, alignItems: "end" }}>
               <div><label style={{ display: "block", fontSize: 11, color: "#64748b", marginBottom: 4 }}>Fund {idx + 1}</label><select value={fund.name} onChange={(e) => { const nf = [...mfFunds]; nf[idx].name = e.target.value; setMfFunds(nf); }} style={{ width: "100%", padding: "8px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", fontSize: 12, outline: "none" }}><option value="">Select...</option>{ALL_FUND_NAMES.map(n => <option key={n} value={n}>{n}</option>)}</select></div>
@@ -594,11 +988,13 @@ export default function MoneyMentor() {
             </div>
             {mfResult.overlapPairs.length > 0 && <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B", marginTop: 0, marginBottom: 14 }}>⚠ OVERLAP</h3>{mfResult.overlapPairs.map((p, i) => (<div key={i} style={{ marginBottom: 12, padding: "12px", borderRadius: 10, background: p.overlapPct >= 60 ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${p.overlapPct >= 60 ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)"}` }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ fontSize: 12, fontWeight: 600 }}>{p.fund1.split(" ").slice(0, 3).join(" ")} ↔ {p.fund2.split(" ").slice(0, 3).join(" ")}</span><span style={{ fontSize: 12, fontWeight: 700, color: p.overlapPct >= 60 ? "#EF4444" : "#F59E0B" }}>{p.overlapPct}%</span></div><div style={{ fontSize: 11, color: "#94a3b8" }}>Common: {p.commonStocks.join(", ")}</div></div>))}</Card>}
             <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#10B981", marginTop: 0, marginBottom: 14 }}>SUGGESTIONS</h3>{mfResult.suggestions.map((s, i) => (<div key={i} style={{ padding: "12px", borderRadius: 10, marginBottom: 8, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}><p style={{ fontSize: 13, color: "#cbd5e1", margin: 0, lineHeight: 1.6 }}>{s}</p></div>))}</Card>
+            <BackToChatBtn onClick={() => returnToChat("mf", `Portfolio analysis complete! Your portfolio has a ${mfResult.weightedReturn.toFixed(1)}% return with ${mfResult.alpha >= 0 ? "positive" : "negative"} alpha of ${mfResult.alpha.toFixed(1)}%. ${mfResult.overlapPairs.length > 0 ? "I found some overlap between your funds that's worth addressing." : "Diversification looks reasonable."}\n\nWant to plan your retirement target or check your overall financial health?`)} />
           </>)}
         </div>)}
 
         {/* COUPLE'S PLANNER */}
         {screen === "module" && activeModule === "couple" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <ModulePurpose moduleKey="couple" />
           {[{ k: "p1", l: "Partner 1", d: p1, s: setP1, c: "#60a5fa" }, { k: "p2", l: "Partner 2", d: p2, s: setP2, c: "#EC4899" }].map(({ k, l, d, s, c }) => (
             <Card key={k}><h3 style={{ fontSize: 14, fontWeight: 700, color: c, marginTop: 0, marginBottom: 16 }}>{l}</h3>
               <InputField label="Annual Income (₹)" value={d.income} onChange={(v) => s({ ...d, income: v })} placeholder="1200000" />
@@ -620,11 +1016,13 @@ export default function MoneyMentor() {
             {coupleResult.monthlySavingCapacity > 0 && <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", marginTop: 0, marginBottom: 14 }}>MONTHLY SPLIT</h3><div style={{ fontSize: 13, color: "#64748b", marginBottom: 14 }}>Capacity: <span style={{ color: "#10B981", fontWeight: 700 }}>{formatINR(coupleResult.monthlySavingCapacity)}</span></div>{[{ n: "P1 Individual SIP", a: coupleResult.sipSuggestion.p1Sip, c: "#60a5fa" }, { n: "P2 Individual SIP", a: coupleResult.sipSuggestion.p2Sip, c: "#EC4899" }, { n: "Joint Goals", a: coupleResult.sipSuggestion.jointGoals, c: "#8B5CF6" }, { n: "Joint Emergency", a: coupleResult.sipSuggestion.jointEmergency, c: "#F59E0B" }].map(i => (<div key={i.n} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1e293b" }}><span style={{ fontSize: 13, color: "#cbd5e1" }}>{i.n}</span><span style={{ fontSize: 14, fontWeight: 700, color: i.c }}>{formatINR(i.a)}/mo</span></div>))}</Card>}
             {(coupleResult.hraAdvice.length > 0 || coupleResult.npsAdvice.length > 0) && <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B", marginTop: 0, marginBottom: 14 }}>TAX TIPS</h3>{[...coupleResult.hraAdvice, ...coupleResult.npsAdvice].map((t, i) => (<div key={i} style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 8, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}><p style={{ fontSize: 13, color: "#cbd5e1", margin: 0, lineHeight: 1.6 }}>{t}</p></div>))}</Card>}
             <Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#10B981", marginTop: 0, marginBottom: 14 }}>INSURANCE</h3>{coupleResult.insuranceAdvice.map((t, i) => (<div key={i} style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 8, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}><p style={{ fontSize: 13, color: "#cbd5e1", margin: 0, lineHeight: 1.6 }}>{t}</p></div>))}</Card>
+            <BackToChatBtn onClick={() => returnToChat("couple", `Joint plan done! Combined post-tax income is ${formatINR(coupleResult.combinedPostTax)} with ${formatINR(coupleResult.monthlySavingCapacity)}/month saving capacity. Each partner should use the ${coupleResult.p1.bestRegime === coupleResult.p2.bestRegime ? coupleResult.p1.bestRegime : "different optimal"} tax regime.\n\nWant to plan your retirement together, or check how your mutual funds are doing?`)} />
           </>)}
         </div>)}
 
         {/* LIFE EVENT */}
         {screen === "module" && activeModule === "life" && (<div style={{ paddingTop: 24, paddingBottom: 60 }}>
+          <ModulePurpose moduleKey="life" />
           {!selectedEvent && (<><Card><h3 style={{ fontSize: 14, fontWeight: 700, color: "#06B6D4", marginTop: 0, marginBottom: 4 }}>What happened?</h3><p style={{ fontSize: 12, color: "#64748b", marginTop: 0, marginBottom: 0 }}>Select a life event</p></Card>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{Object.entries(LIFE_EVENTS).map(([k, e]) => (<button key={k} onClick={() => { setSelectedEvent(k); setLifeAnswers({}); setLifeResult(null); }} style={{ padding: "20px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #334155", borderRadius: 14, cursor: "pointer", textAlign: "center" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = "#06B6D4"} onMouseLeave={(e) => e.currentTarget.style.borderColor = "#334155"}><div style={{ fontSize: 32, marginBottom: 8 }}>{e.icon}</div><div style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{e.name}</div></button>))}</div></>)}
           {selectedEvent && !lifeResult && (<Card>
@@ -637,6 +1035,7 @@ export default function MoneyMentor() {
             <Card style={{ textAlign: "center" }}><span style={{ fontSize: 40 }}>{LIFE_EVENTS[selectedEvent].icon}</span><h3 style={{ fontSize: 18, fontWeight: 700, color: "#06B6D4", margin: "8px 0 4px" }}>Your {LIFE_EVENTS[selectedEvent].name} Plan</h3><p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{lifeResult.length} recommendations</p></Card>
             {lifeResult.map((a, i) => (<Card key={i}><div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}><PriorityBadge priority={a.priority} /><span style={{ fontSize: 14, fontWeight: 700 }}>{a.title}</span></div><p style={{ fontSize: 13, color: "#cbd5e1", margin: 0, lineHeight: 1.7 }}>{a.text}</p></Card>))}
             <button onClick={() => { setSelectedEvent(null); setLifeAnswers({}); setLifeResult(null); }} style={{ width: "100%", padding: "14px", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", borderRadius: 10, color: "#06B6D4", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>↻ Try Another Event</button>
+            <BackToChatBtn onClick={() => returnToChat("life", `Your ${LIFE_EVENTS[selectedEvent].name} action plan is ready with ${lifeResult.length} steps! The most urgent: ${lifeResult[0]?.title}.\n\nLife events often trigger tax implications too. Want to check your tax situation, or do a full financial health check-up?`)} />
           </>)}
         </div>)}
       </div>
