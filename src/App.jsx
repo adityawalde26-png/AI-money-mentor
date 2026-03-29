@@ -265,7 +265,8 @@ export default function MoneyMentor() {
     setChatLoading(true);
     try {
       const conversationHistory = newMessages.filter(m => m.role === "user").map(m => ({ role: "user", parts: [{ text: m.content }] }));
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA28Vb0Q4jdJ3BGGXllzNVRVNv1jjTmMmM", {
+      const makeRequest = async (retries = 2) => {
+        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=AIzaSyA28Vb0Q4jdJ3BGGXllzNVRVNv1jjTmMmM", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -274,7 +275,14 @@ export default function MoneyMentor() {
         }),
       });
       const data = await response.json();
-      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || (data.error ? "Error: " + data.error.message : "I'm having trouble connecting. Please try the tools below!");
+        if (data.error && retries > 0) {
+          await new Promise(r => setTimeout(r, 12000));
+          return makeRequest(retries - 1);
+        }
+        return data;
+      };
+      const data = await makeRequest();
+      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || (data.error ? "I'm thinking hard! Please wait a moment and try again." : "I'm having trouble connecting. Please try the tools below!");
       setChatMessages([...newMessages, { role: "assistant", content: aiReply }]);
     } catch (err) {
       setChatMessages([...newMessages, { role: "assistant", content: "I'm having trouble connecting right now. Please try one of the tools below — they all work offline!" }]);
